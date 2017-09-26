@@ -24,8 +24,16 @@ class ThemePlugin(BaseAdminPlugin):
     # {'name': 'Blank Theme', 'description': '...', 'css': 'http://...', 'thumbnail': '...'}
     user_themes = None
     use_bootswatch = False
-    default_theme = static('xadmin/css/themes/bootstrap-xadmin.css')
-    bootstrap2_theme = static('xadmin/css/themes/bootstrap-theme.css')
+    #default_theme = static('xadmin/css/themes/bootstrap-xadmin.css')
+    #bootstrap2_theme = static('xadmin/css/themes/bootstrap-theme.css')
+    
+    @property
+    def default_theme(self):
+        return static('xadmin/css/themes/bootstrap-xadmin.css')
+    
+    @property
+    def bootstrap2_theme(self):
+        return static('xadmin/css/themes/bootstrap-theme.css')
 
     def init_request(self, *args, **kwargs):
         return self.enable_themes
