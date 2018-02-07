@@ -98,7 +98,7 @@ class ResultHeader(ResultItem):
 
     @property
     def label(self):
-        text = " ".join([w[0].upper()+w[1:] if len(w) > 2 else w
+        text = " ".join([w[0].upper()+w[1:] if len(w) > 1 else w.upper()
                          for w in self.text.split()])
         text = mark_safe(text) if self.allow_tags else conditional_escape(text)
         if force_text(text) == '':
