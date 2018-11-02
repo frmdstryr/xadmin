@@ -49,7 +49,20 @@ class BaseActionView(ModelAdminView):
         self.admin_site = list_view.admin_site
 
     @filter_hook
-    def do_action(self, queryset):
+    def do_action(self, queryset, form=None):
+        """ 
+        Parameters
+        ----------
+        queryset: QuerySet
+            The selected items
+        form: Form
+            The populated and validated action_form if given
+            
+        Returns
+        -------
+        response: HttpResponse
+            The response for this action or none for the default
+        """
         pass
 
 
@@ -185,6 +198,17 @@ class ActionPlugin(BaseAdminPlugin):
                 ac, name, description, icon, form = self.actions[action]
                 select_across = request.POST.get('select_across', False) == '1'
                 selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
+                action_form = None
+                if form:
+                    # Validate the form if one exists
+                    action_form = form(request.POST)
+                    if not action_form.is_valid():
+                        msg = _("No items have been changed due to the "
+                                "following errors: {}. ".format(
+                                    action_form.errors.as_text()))
+                        av.message_user(msg)
+                        return response
+
 
                 if not selected and not select_across:
                     # Reminder that something needs to be selected or nothing will happen
@@ -196,7 +220,8 @@ class ActionPlugin(BaseAdminPlugin):
                     if not select_across:
                         # Perform the action only on the selected objects
                         queryset = av.list_queryset.filter(pk__in=selected)
-                    response = self.response_action(ac, queryset)
+                    
+                    response = self.response_action(ac, queryset, action_form)
                     # Actions may return an HttpResponse, which will be used as the
                     # response from the POST. If not, we'll be a good little HTTP
                     # citizen and redirect back to the changelist page.
@@ -206,10 +231,12 @@ class ActionPlugin(BaseAdminPlugin):
                         return HttpResponseRedirect(request.get_full_path())
         return response
 
-    def response_action(self, ac, queryset):
+    def response_action(self, ac, queryset, action_form=None):
         if isinstance(ac, type) and issubclass(ac, BaseActionView):
             action_view = self.get_model_view(ac, self.admin_view.model)
             action_view.init_action(self.admin_view)
+            if action_form:
+                return action_view.do_action(queryset, action_form)
             return action_view.do_action(queryset)
         else:
             return ac(self.admin_view, self.request, queryset)
