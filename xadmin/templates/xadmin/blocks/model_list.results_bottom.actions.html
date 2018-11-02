@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load crispy_forms_tags %}
 <div class="form-actions well well-sm">
   <input type="hidden" id="action" name="action" value=""/>
   <input type="hidden" id="select-across" name="select_across" value=""/>
@@ -9,8 +10,12 @@
     <span class="all" style="display: none;">{{ selection_note_all }}</span>
     <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-      {% for name, descr, icon in action_choices %}
-        <li><a onclick="$.do_action('{{name}}');"><i class="{{icon}}"></i> {{descr}}</a></li>
+      {% for name, descr, icon, form in action_choices %}
+        {% if form %}
+          <li><a data-toggle="modal" data-target="#action-modal-{{name|slugify}}"><i class="{{icon}}"></i> {{descr}}</a></li>
+        {% else %}
+          <li><a onclick="$.do_action('{{name}}');"><i class="{{icon}}"></i> {{descr}}</a></li>
+        {% endif %}
       {% endfor %}
     </ul>
   </div>
@@ -22,3 +27,24 @@
   {% endif %}
   <script type="text/javascript">var _actions_icnt="{{ cl.result_list|length|default:"0" }}";</script>
 </div>
+{% for name, descr, icon, form in action_choices %}
+{% if form %}
+<div id="action-modal-{{name|slugify}}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{descr}}</h4>
+    </div>
+    <div class="modal-body">
+        {% crispy form %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="$.do_action('{{name}}');">Submit</button>
+    </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}

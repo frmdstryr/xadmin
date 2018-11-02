@@ -25,6 +25,8 @@ from xadmin.views.edit import CreateAdminView
 from xadmin.views.list import ListAdminView
 from xadmin.util import unquote, DJANGO_11
 import copy
+import traceback
+import logging
 
 
 class WidgetTypeSelect(forms.Widget):
@@ -531,7 +533,9 @@ class Dashboard(CommAdminView):
                     widget.set_value(opts)
                     widget.save()
                     portal_col.append(self.get_widget(widget))
-                except (PermissionDenied, WidgetDataError):
+                except (PermissionDenied, WidgetDataError) as e:
+                    import logging
+                    logging.error(e, exc_info=True)
                     widget.delete()
                     continue
             portal.append(portal_col)

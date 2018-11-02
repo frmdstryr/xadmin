@@ -15,6 +15,7 @@ from xadmin.layout import FormHelper, Layout, flatatt, Container, Column, Field,
 from xadmin.plugins.utils import get_context_dict
 from xadmin.sites import site
 from xadmin.views import BaseAdminPlugin, ModelFormAdminView, DetailAdminView, filter_hook
+from collections import OrderedDict
 
 
 class ShowField(Field):
@@ -230,7 +231,7 @@ class InlineModelAdmin(ModelFormAdminView):
                     for readonly_field in readonly_fields:
                         value = None
                         label = None
-                        if readonly_field in inst._meta.get_all_field_names():
+                        if readonly_field in [f.name for f in inst._meta.get_fields()]:
                             label = inst._meta.get_field(readonly_field).verbose_name
                             value = smart_text(getattr(inst, readonly_field))
                         elif inspect.ismethod(getattr(inst, readonly_field, None)):
@@ -336,6 +337,15 @@ class InlineFormset(Fieldset):
         self.flat_attrs = flatatt(kwargs)
         self.extra_attrs = formset.style.get_attrs()
 
+    def render_link(self, template_pack=TEMPLATE_PACK, **kwargs):
+        """
+        Render the link for the tab-pane. It must be called after render so css_class is updated
+        with active if needed.
+        """
+        return ""
+        #link_template = self.link_template % template_pack
+        #return render_to_string(link_template, {'link': self})
+
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK, **kwargs):
         context = get_context_dict(context)
         context.update(dict(
@@ -432,7 +442,7 @@ class InlineFormsetPlugin(BaseAdminPlugin):
     def get_form_layout(self, layout):
         allow_blank = isinstance(self.admin_view, DetailAdminView)
         # fixed #176 bug, change dict to list
-        fs = [(f.model, InlineFormset(f, allow_blank)) for f in self.formsets]
+        fs =OrderedDict( [(f.model, InlineFormset(f, allow_blank)) for f in self.formsets])
         replace_inline_objects(layout, fs)
 
         if fs:
@@ -443,7 +453,7 @@ class InlineFormsetPlugin(BaseAdminPlugin):
                 container = layout
 
             # fixed #176 bug, change dict to list
-            for key, value in fs:
+            for key, value in fs.items():
                 container.append(value)
 
         return layout

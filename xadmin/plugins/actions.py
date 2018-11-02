@@ -32,11 +32,12 @@ action_checkbox.allow_tags = True
 action_checkbox.allow_export = False
 action_checkbox.is_column = False
 
+
 class BaseActionView(ModelAdminView):
     action_name = None
     description = None
     icon = 'fa fa-tasks'
-
+    action_form = None
     model_perm = 'change'
 
     @classmethod
@@ -181,7 +182,7 @@ class ActionPlugin(BaseAdminPlugin):
                         "actions on them. No items have been changed.")
                 av.message_user(msg)
             else:
-                ac, name, description, icon = self.actions[action]
+                ac, name, description, icon, form = self.actions[action]
                 select_across = request.POST.get('select_across', False) == '1'
                 selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
 
@@ -233,8 +234,8 @@ class ActionPlugin(BaseAdminPlugin):
 
         # Convert the actions into a OrderedDict keyed by name.
         actions = OrderedDict([
-            (name, (ac, name, desc, icon))
-            for ac, name, desc, icon in actions
+            (name, (ac, name, desc, icon, form))
+            for ac, name, desc, icon, form in actions
         ])
 
         return actions
@@ -245,8 +246,9 @@ class ActionPlugin(BaseAdminPlugin):
         tuple (name, description).
         """
         choices = []
-        for ac, name, description, icon in self.actions.values():
-            choice = (name, description % model_format_dict(self.opts), icon)
+        for ac, name, description, icon, form in self.actions.itervalues():
+            choice = (name, description % model_format_dict(self.opts), 
+                      icon, form)
             choices.append(choice)
         return choices
 
@@ -254,7 +256,9 @@ class ActionPlugin(BaseAdminPlugin):
         if isinstance(action, type) and issubclass(action, BaseActionView):
             if not action.has_perm(self.admin_view):
                 return None
-            return action, getattr(action, 'action_name'), getattr(action, 'description'), getattr(action, 'icon')
+            return (action, getattr(action, 'action_name'), 
+                    getattr(action, 'description'), getattr(action, 'icon'), 
+                    getattr(action, 'action_form'))
 
         elif callable(action):
             func = action
@@ -271,7 +275,7 @@ class ActionPlugin(BaseAdminPlugin):
         else:
             description = capfirst(action.replace('_', ' '))
 
-        return func, action, description, getattr(func, 'icon', 'tasks')
+        return func, action, description, getattr(func, 'icon', 'tasks'), None
 
     # View Methods
     def result_header(self, item, field_name, row):

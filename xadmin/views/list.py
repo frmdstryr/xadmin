@@ -5,7 +5,7 @@ from django.core.urlresolvers import NoReverseMatch
 from django.db import models
 from django.http import HttpResponseRedirect
 from django.template.response import SimpleTemplateResponse, TemplateResponse
-from django.utils.encoding import force_unicode, smart_unicode
+from django.utils.encoding import force_unicode, smart_unicode, force_text
 from django.utils.html import escape, conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
